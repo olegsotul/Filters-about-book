@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фильтрация книг по настроению, году, автору и жанру</title>
+    <style>
+        
+        body {
+   
+            background-color: BlanchedAlmond;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-image: url(https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D);
+    
+        }
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: inherit; 
+            background-size: cover;
+            background-position: center;
+            filter: blur(10px); 
+            z-index: -1; 
+            pointer-events: none; 
+        }
+ 
+        .fon_scroll {
+            margin:0 auto;
+            width:700px;
+            height:800px;
+            padding:30px;
+         
+            background-image:url(https://imo10.labirint.ru/books/621296/ph_02.jpg/960-0);
+            background-repeat:no-repeat;
+            background-attachment:fixed;
+            background-position:40px 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #000000;
+            font-family: GABRIOLA;
+            font-size:6ch;
+        }
+        .filter-section {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .filter-section select {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .books-container {
+            display: flex;
+            grid-template-columns: repeat(5, 1fr);
+            flex-wrap: wrap;
+            justify-content: center; 
+            gap: 20px; /* Отступ между книгами */
+            margin-top: 30px;
+        }
+        .book-item {
+            background-color: #FFE4E1;
+            padding: 15px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.096);
+            width: 250px; /* Ширина книги */
+            text-align: center;
+            cursor: pointer;
+        }
+        .book-item .book-image {
+            width: 100%;
+            height: 300px;
+            background-color: #ccc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        }
+        .book-item span {
+            font-weight: bold;
+            color: #0707df;
+            text-decoration: underline;
+        }
+        .book-item span:hover {
+            color: #2765c2;
+        }
+
+        .favorite-btn {
+            background-color: #f5b62d;
+            color: rgb(255, 255, 255);
+            border: none;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #df9dd9;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ec8cd4;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            max-height: 80%;
+            overflow-y: auto; /* прокрут */
+        }
+        .modal-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .close {
+            color: #f50000;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .modal-body {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* раздел избранных книг */
+        .favorites-section {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #FFE4E1;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(231, 3, 3, 0.1);
+            max-height: 80%;
+            overflow-y: auto;
+            width: 250px;
+        }
+        .favorites-section h2 {
+            font-size: 18px;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+        .favorites-section .favorite-book {
+            padding: 5px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .favorites-section .favorite-book:hover {
+            background-color: #e47bf1;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Сервис по подбору книг на основе вашего настроения</h1>
+
+    <div class="filter-section">
+        <label for="mood-select">Выберите настроение: </label>
+        <select id="mood-select" onchange="filterBooks()">
+            <option value="all">Все</option>
+            <option value="happy">Счастливое</option>
+            <option value="sad">Печальное</option>
+            <option value="adventure">Приключенческое</option>
+            <option value="mystery">Детективное</option>
+            <option value="depression">Депрессивное</option>
+
+        </select>
+
+        <label for="year-select">Выберите год: </label>
+        <select id="year-select" onchange="filterBooks()">
+            <option value="all">Все</option>
+            <option value="1860 - 1800">1860 - 1800</option>
+            <option value="1900 - 1860">1900 - 1860</option>
+            <option value="1940 - 1900">1940 - 1900</option>
+            <option value="1980 - 1940">1980 - 1940</option>
+            <option value="2025 - 1980">2025 - 1980</option>
+        </select>
+
+        <label for="author-select">Выберите автора: </label>
+        <select id="author-select" onchange="filterBooks()">
+            <option value="all">Все</option>
+            <option value="Харпер Ли">Харпер Ли</option>
+            <option value="Юкио Мисима">Юкио Мисима</option>
+            <option value="Анна Франк">Анна Франк</option>
+            <option value="Джоан Оруэлл">Джордж Оруэлл</option>
+            <option value="Джоан Роулинг">Джоан Роулинг</option>
+            <option value="Дж Р. Р. Толкин">Дж. Р. Р. Толкин</option>
+            <option value="И. А. Гончаров">И. А. Гончаров</option>
+            <option value="Ёсиюки Садамото">Ёсиюки Садамото</option>
+            <option value="Альбер Камю">Альбер Камю</option>
+            <option value="Рей Брэдбери">Рей Брэдбери</option>
+            <option value="Ф.М.Достоевский">Ф.М.Достоевский</option>
+        </select>
+
+        <label for="genre-select">Выберите жанр: </label>
+        <select id="genre-select" onchange="filterBooks()">
+            <option value="all">Все</option>
+            <option value="poema">Поэма</option>
+            <option value="povest">Повесть</option>
+            <option value="rasskaz">Расскказ</option>
+            <option value="roman">Роман</option>
+            <option value="manga">Манга</option>
+            <option value="novel">Новелла</option>
+            <option value="mystery">Детектив</option>
+            <option value="adventure">Приключения</option>
+        </select>
+    </div>
+
+    <!--По идее дата база для всех книг -->
+    <!-- сюда еще пихаем книги -->
+    <div class="books-container" id="books-container">
+        <div class="book-item" data-mood="depression" data-year="1942" data-author="Альбер Камю" data-genre="roman">
+            <div class="book-image" onclick="openModal('Посторонний', 'Аннотация к книге: Героя этой повести судят за убийство, которое он совершил по самой глупой из всех возможных причин. И это правда, которую герой не боится бросить в лицо своим судьям, пойти наперекор всему, забыть обо всех условностях и умереть во имя своих убеждений.')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://imo10.labirint.ru/books/937072/cover.jpg/242-0" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>Посторонний</span> - Автор: Альбер Камю - Год: 1942 - Жанр: Роман
+            <button class="favorite-btn" onclick="toggleFavorite('Посторонний', 'Альбер Камю', '1942', 'Психология')">Добавить в избранное</button>
+        </div>
+        <div class="book-item" data-mood="depression" data-year="1980 - 1940" data-author="Рей Брэдбери" data-genre="roman">
+            <div class="book-image" onclick="openModal('451° по Фаренгейту', 'Аннотация к книге:  В романе описан мир будущего, в котором книги безжалостно сжигаются отрядом пожарных, их запрещено читать в тоталитарном обществе. В центре романа - история пожарного Гая Монтага. Ряд трагических событий приводит его к пониманию того, что в жизни человека существуют истинные ценности, и он становится изгоем общества.')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://www.moscowbooks.ru/image/book/552/orig/i552613.jpg?cu=20180101000000" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>451° по Фаренгейту</span> - Автор: Рей Брэдбери - Год: 1953 - Жанр: Роман
+            <button class="favorite-btn" onclick="toggleFavorite('451° по Фаренгейту', 'Рей Брэдбери', '1953', 'На подумать')">Добавить в избранное</button>
+        </div>
+        <div class="book-item" data-mood="depression" data-year="1866" data-author="Ф.М.Достоевский" data-genre="roman">
+            <div class="book-image" onclick="openModal('Преступление и Наказание', 'Аннотация к книге: роман об одном преступлении. Двойное убийство, совершенное бедным студентом из-за денег. Трудно найти фабулу проще, но интеллектуальное и душевное потрясение, которое производит роман, - неизгладимо.А вопрос, который главный герой поставил перед собой для решения: Тварь ли я дрожащая или право имею? - ужасает. Бездны падения исследует писатель для того, чтобы подняться на вершины духа.')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://www.moscowbooks.ru/image/book/495/orig/i495426.jpg?cu=20180101000000" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>Преступление и Наказание</span> - Автор: Ф.М.Достоевский - Год: 1866 - Жанр: Роман
+            <button class="favorite-btn" onclick="toggleFavorite('Преступление и Наказание', 'Ф.М.Достоевский', '1866', 'На подумать')">Добавить в избранное</button>
+        </div>
+   
+        <div class="book-item" data-mood="depression" data-year="2025 - 1980" data-author="Юкио Мисима" data-genre="roman">
+            <div class="book-image" onclick="openModal('Жизнь на продажу', 'Аннотация к книге: В романе «Жизнь на продажу» молодой служащий рекламной фирмы Ханио Ямада после неудачной попытки самоубийства помещает в газете объявление: «Продам жизнь. Можете использовать меня по своему усмотрению. Конфиденциальность гарантирована». И кто только к нему не обращается!')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://kot-baun.ru/uploads/posts/2023-12/1701959571_zhizn-na-prodazhu.jpg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>Жизнь на продажу</span> - Автор: Юкио Мисима - Год: 2022 - Жанр: Роман
+            <button class="favorite-btn" onclick="toggleFavorite('Жизнь на продажу', 'Юкио Мисима', '', 'fiction')">Добавить в избранное</button>
+        </div>
+        <div class="book-item" data-mood="depression" data-year="1900 - 1860" data-author="И. А. Гончаров" data-genre="roman">
+            <div class="book-image" onclick="openModal('Обломов', 'Аннотация к книге: роман рассказывает о жизни и судьбе главного героя, Ильи Ильича Обломова, человека, замкнутого в себе, который страдает от бездействия, лени и отсутствия целеустремленности. Главный герой живет в мире собственных мечтаний и фантазий, неспособный принять активное участие в жизни.')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://cdn1.ozone.ru/s3/multimedia-f/6720838251.jpg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>Обломов</span> - Автор: И. А. Гончаров - Год: 1862 - Жанр: Роман
+            <button class="favorite-btn" onclick="toggleFavorite('Обломов', 'И. А. Гончаров', '1862', 'fiction')">Добавить в избранное</button>
+        </div>
+        <div class="book-item" data-mood="depression" data-year="2025 - 1980" data-author="Ёсиюки Садамото" data-genre="manga">
+            <div class="book-image" onclick="openModal('Евангелион', 'Аннотация к книге: Катастрофы обрушиваются на Землю одна за другой. После чудовищного катаклизма, погубившего половину человечества, людям приходится сражаться с неизвестными существами, которых назвали Ангелами. Для борьбы с ними создано человекоподобное оружие – Евангелион. Но пилотировать его могут только подростки.Катастрофы обрушиваются на Землю одна за другой. После чудовищного катаклизма, погубившего половину человечества, людям приходится сражаться с неизвестными существами, которых назвали Ангелами. Для борьбы с ними создано человекоподобное оружие – Евангелион. Но пилотировать его могут только подростки.')">
+                <!-- сдесь надо фото вставить -->
+                <img src="https://main-cdn.sbermegamarket.ru/big1/hlr-system/124/819/177/932/019/54/600016497555b0.jpg" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            </div>
+            <span>Евангелион</span> - Автор: Ёсиюки Садамото - Год: 1993 - Жанр: Манга
+            <button class="favorite-btn" onclick="toggleFavorite('Евангелион', 'Ёсиюки Садамото', '1993', 'fiction')">Добавить в избранное</button>
+        </div>
+        <!--  окно для просмотра описания -->
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div id="modal-header"></div>
+                <div id="modal-body"></div>
+            </div>
+        </div>
+
+        <!--  избранные книги -->
+        <div class="favorites-section" id="favorites-section">
+            <h2>Избранное</h2>
+            <div id="favorites-list"></div>
+        </div>
+
+        <script>
+            //  фильтрация книг
+            function filterBooks() {
+                var mood = document.getElementById('mood-select').value;
+                var year = document.getElementById('year-select').value;
+                var author = document.getElementById('author-select').value;
+                var genre = document.getElementById('genre-select').value;
+
+                var books = document.querySelectorAll('.book-item');
+
+                books.forEach(function (book) {
+                    var bookMood = book.getAttribute('data-mood');
+                    var bookYear = book.getAttribute('data-year');
+                    var bookAuthor = book.getAttribute('data-author');
+                    var bookGenre = book.getAttribute('data-genre');
+
+                    var show = true;
+
+                    //  настроение
+                    if (mood !== 'all' && bookMood !== mood) {
+                        show = false;
+                    }
+                    //  год
+                    if (year !== 'all' && bookYear !== year) {
+                        show = false;
+                    }
+                    //  автора
+                    if (author !== 'all' && bookAuthor !== author) {
+                        show = false;
+                    }
+                    //  жанр
+                    if (genre !== 'all' && bookGenre !== genre) {
+                        show = false;
+                    }
+
+                    // Отображаем или скрываем книгу в зависимости от фильтров
+                    book.style.display = show ? 'block' : 'none';
+                });
+            }
+
+            // открытие описания
+            function openModal(title, text) {
+                document.getElementById('modal-header').innerText = title;
+                document.getElementById('modal-body').innerText = text;
+                document.getElementById('myModal').style.display = 'block';
+            }
+
+            // закрытие описания
+            function closeModal() {
+                document.getElementById('myModal').style.display = 'none';
+            }
+
+            // закрытия при клике вне
+            window.onclick = function (event) {
+                if (event.target == document.getElementById('myModal')) {
+                    closeModal();
+                }
+            }
+
+            //  добавление/удаление книги в избранное
+            function toggleFavorite(title, author, year, genre) {
+                var favoriteBooks = JSON.parse(localStorage.getItem('favoriteBooks')) || [];
+
+                // Проверяем, есть ли книга уже в избранном
+                var index = favoriteBooks.findIndex(function (book) {
+                    return book.title === title && book.author === author;
+                });
+
+                if (index === -1) {
+                    // Если книги нет то добавить
+                    favoriteBooks.push({ title, author, year, genre });
+                    alert('Книга добавлена в избранное!');
+                } else {
+                    // Если книга есть то удалить
+                    favoriteBooks.splice(index, 1);
+                    alert('Книга удалена из избранного!');
+                }
+
+                // обновлённый список избранных книг
+                localStorage.setItem('favoriteBooks', JSON.stringify(favoriteBooks));
+
+                // обновляем избранные книг
+                updateFavoritesList();
+            }
+
+            // обновление списка избранных книг
+            function updateFavoritesList() {
+                var favorites = JSON.parse(localStorage.getItem('favoriteBooks')) || [];
+                var favoritesList = document.getElementById('favorites-list');
+                favoritesList.innerHTML = '';
+
+                favorites.forEach(function (book) {
+                    var bookElement = document.createElement('div');
+                    bookElement.classList.add('favorite-book');
+                    bookElement.innerText = `${book.title} - ${book.author}`;
+                    bookElement.onclick = function () {
+                        openModal(book.title, `Год: ${book.year}, Жанр: ${book.genre}`);
+                    };
+                    favoritesList.appendChild(bookElement);
+                });
+            }
+
+            // подгрузка избранных  книг
+            window.onload = function () {
+                updateFavoritesList();
+            }
+        </script>
+
+</body>
+</html>
